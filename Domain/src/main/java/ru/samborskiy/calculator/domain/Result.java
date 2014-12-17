@@ -1,4 +1,4 @@
-package ru.samborskiy.calculator.server.entities;
+package ru.samborskiy.calculator.domain;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -8,15 +8,17 @@ import java.io.IOException;
 public final class Result {
 
     private final int result;
+    private final String errorMessage;
 
     @JsonCreator
-    public Result(@JsonProperty("result") int result) {
+    public Result(@JsonProperty("result") int result, @JsonProperty("errorMessage") String errorMessage) {
         this.result = result;
+        this.errorMessage = errorMessage;
     }
 
-    public static Result build(byte[] data) {
+    public static Result extract(byte[] data) {
         try {
-            return EntityUtil.serialize(data, Result.class);
+            return EntityUtil.deserialize(data, Result.class);
         } catch (IOException e) {
             e.printStackTrace();
             return null;
@@ -27,9 +29,13 @@ public final class Result {
         return result;
     }
 
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
     @Override
     public String toString() {
-        return EntityUtil.deserialize(this);
+        return EntityUtil.serialize(this);
     }
 
 }

@@ -1,4 +1,4 @@
-package ru.samborskiy.calculator.server.entities;
+package ru.samborskiy.calculator.domain;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -12,11 +12,11 @@ public class EntityUtil {
     private EntityUtil() {
     }
 
-    public static <T> T serialize(byte[] jsonData, Class<T> tClass) throws IOException {
+    public static <T> T deserialize(byte[] jsonData, Class<T> tClass) throws IOException {
         return mapper.readValue(jsonData, tClass);
     }
 
-    public static String deserialize(Object object) {
+    public static String serialize(Object object) {
         StringWriter str = new StringWriter();
         try {
             mapper.writeValue(str, object);

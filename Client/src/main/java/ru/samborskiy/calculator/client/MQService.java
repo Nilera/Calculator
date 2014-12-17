@@ -5,13 +5,13 @@ import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.QueueingConsumer;
 import com.rabbitmq.client.QueueingConsumer.Delivery;
-import ru.samborskiy.calculator.server.Worker;
 
 import java.io.IOException;
 
 public class MQService implements AutoCloseable {
 
     private static final String MQ_ADDRESS = "localhost";
+    private static final String QUEUE_NAME = "calculator";
 
     private Connection connection;
     private Channel channel;
@@ -46,7 +46,7 @@ public class MQService implements AutoCloseable {
 
     public void sendMessage(byte[] message) throws IOException {
         if (channel != null && channel.isOpen()) {
-            channel.basicPublish("", Worker.QUEUE_NAME, null, message);
+            channel.basicPublish("", QUEUE_NAME, null, message);
         }
     }
 

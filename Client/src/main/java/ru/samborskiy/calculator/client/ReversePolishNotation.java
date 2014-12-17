@@ -1,16 +1,17 @@
 package ru.samborskiy.calculator.client;
 
-import ru.samborskiy.calculator.server.entities.Expression;
-import ru.samborskiy.calculator.server.entities.Result;
+import ru.samborskiy.calculator.domain.Expression;
+import ru.samborskiy.calculator.domain.Result;
+import ru.samborskiy.calculator.operation.Operation;
+import ru.samborskiy.calculator.operation.OperationFactory;
 
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.EmptyStackException;
+import java.util.List;
 import java.util.Stack;
 import java.util.StringTokenizer;
 
 public class ReversePolishNotation {
-
-    private static final String SIGNS = "+-*/";
 
     private String expressionText;
     private Tree root;
@@ -25,10 +26,13 @@ public class ReversePolishNotation {
         try {
             while (st.hasMoreTokens()) {
                 String token = st.nextToken();
-                if (isSign(token)) {
-                    Tree right = stack.pop();
-                    Tree left = stack.pop();
-                    stack.push(new Tree(left, right, token.charAt(0)));
+                Operation operation = OperationFactory.getOperation(token);
+                if (operation != null) {
+                    List<Tree> children = new ArrayList<>();
+                    for (int i = 0; i < operation.argumentNumber(); i++) {
+                        children.add(stack.pop());
+                    }
+                    stack.push(new Tree(token, children));
                 } else {
                     Integer value = getInteger(token);
                     if (value == null) {
@@ -45,21 +49,31 @@ public class ReversePolishNotation {
         }
     }
 
-    public int evaluate(MQService service) throws IOException, InterruptedException {
-        return dfs(root, service);
+    public int evaluate(MQService service) throws Exception {
+        return recursiveEvaluate(root, service);
     }
 
-    private int dfs(Tree node, MQService service) throws IOException, InterruptedException {
-        if (node.getLeft() != null) {
-            int left = dfs(node.getLeft(), service);
-            int right = dfs(node.getRight(), service);
-            Expression expression = new Expression(left, right, node.getSign(), service.getQueueName());
-            service.sendMessage(expression.toString().getBytes());
-            Result result = Result.build(service.getMessage().getBody());
-            node.setValue(result.getResult());
+    private int recursiveEvaluate(Tree node, MQService service) throws Exception {
+        if (node.getChildren() != null) {
+            int[] args = new int[node.size()];
+            int i = args.length - 1;
+            for (Tree child : node) {
+                args[i--] = recursiveEvaluate(child, service);
+            }
+            node.setValue(calculateValue(service, node.getSign(), args));
             return node.getValue();
         }
         return node.getValue();
+    }
+
+    private int calculateValue(MQService service, String sign, int... args) throws Exception {
+        Expression expression = new Expression(sign, service.getQueueName(), args);
+        service.sendMessage(expression.toString().getBytes());
+        Result result = Result.extract(service.getMessage().getBody());
+        if (!result.getErrorMessage().isEmpty()) {
+            throw new IllegalArgumentException(result.getErrorMessage());
+        }
+        return result.getResult();
     }
 
     private Integer getInteger(String token) {
@@ -70,7 +84,4 @@ public class ReversePolishNotation {
         }
     }
 
-    private boolean isSign(String token) {
-        return token.length() == 1 && SIGNS.contains(token);
-    }
 }

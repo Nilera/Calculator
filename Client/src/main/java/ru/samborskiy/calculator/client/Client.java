@@ -14,10 +14,14 @@ public class Client {
             String expression;
             while (!(expression = in.readLine()).equals(EXIT_COMMAND)) {
                 ReversePolishNotation notation = new ReversePolishNotation(expression);
-                if (notation.parseExpression()) {
-                    System.out.println(notation.evaluate(service));
-                } else {
-                    System.out.println("Incorrect expression");
+                try {
+                    if (notation.parseExpression()) {
+                        System.out.println(notation.evaluate(service));
+                    } else {
+                        System.err.println("Incorrect expression");
+                    }
+                } catch (Exception e) {
+                    System.err.println(e.getMessage());
                 }
             }
         } catch (Exception e) {

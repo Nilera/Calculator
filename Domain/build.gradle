@@ -9,7 +9,5 @@ repositories {
 
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.11'
-    compile 'com.rabbitmq:amqp-client:3.3.4'
-    compile project(':Domain')
-    compile project(':Operation')
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.2.+'
 }

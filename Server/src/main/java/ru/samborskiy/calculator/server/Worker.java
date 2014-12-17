@@ -3,12 +3,13 @@ package ru.samborskiy.calculator.server;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.QueueingConsumer;
 import com.rabbitmq.client.QueueingConsumer.Delivery;
-import ru.samborskiy.calculator.server.entities.Expression;
-import ru.samborskiy.calculator.server.entities.Result;
-import ru.samborskiy.calculator.server.operations.Operation;
-import ru.samborskiy.calculator.server.operations.OperationFactory;
+import ru.samborskiy.calculator.domain.Expression;
+import ru.samborskiy.calculator.domain.Result;
+import ru.samborskiy.calculator.operation.Operation;
+import ru.samborskiy.calculator.operation.OperationFactory;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 
 public class Worker implements Runnable {
@@ -30,8 +31,8 @@ public class Worker implements Runnable {
             channel.basicConsume(QUEUE_NAME, true, consumer);
             while (true) {
                 Delivery delivery = consumer.nextDelivery();
-                Expression exp = Expression.build(delivery.getBody());
-                System.out.println(String.format("%s received %d %c %d", name, exp.getLeft(), exp.getSign(), exp.getRight()));
+                Expression exp = Expression.extract(delivery.getBody());
+                System.out.println(String.format("%s received %s %s", name, exp.getSign(), Arrays.toString(exp.getArgs())));
                 expressionProcessing(exp);
             }
         } catch (Exception e) {
@@ -40,8 +41,14 @@ public class Worker implements Runnable {
     }
 
     private void expressionProcessing(Expression exp) throws IOException {
-        Operation operation = OperationFactory.getOperation(exp.getSign(), exp.getLeft(), exp.getRight());
-        Result result = new Result(operation.evaluate());
+        Operation operation = OperationFactory.getOperation(exp.getSign());
+        operation.setArgs(exp.getArgs());
+        Result result;
+        try {
+            result = new Result(operation.evaluate(), "");
+        } catch (Exception e) {
+            result = new Result(0, e.getMessage());
+        }
         channel.basicPublish("", exp.getQueue(), null, result.toString().getBytes());
     }
 
