@@ -67,7 +67,7 @@ public class ReversePolishNotation {
     }
 
     private int calculateValue(MQService service, String sign, int... args) throws Exception {
-        Expression expression = new Expression(sign, service.getQueueName(), args);
+        Expression expression = new Expression(sign, args);
         service.sendMessage(expression.toString().getBytes());
         Result result = Result.extract(service.getMessage().getBody());
         if (!result.getErrorMessage().isEmpty()) {

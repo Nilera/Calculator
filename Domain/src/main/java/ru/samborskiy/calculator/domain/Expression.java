@@ -8,14 +8,11 @@ import java.io.IOException;
 public final class Expression {
 
     private final String sign;
-    private final String queue;
     private final int[] args;
 
     @JsonCreator
-    public Expression(@JsonProperty("sign") String sign, @JsonProperty("queue") String queue,
-                      @JsonProperty("args") int[] args) {
+    public Expression(@JsonProperty("sign") String sign, @JsonProperty("args") int[] args) {
         this.sign = sign;
-        this.queue = queue;
         this.args = args;
     }
 
@@ -30,10 +27,6 @@ public final class Expression {
 
     public String getSign() {
         return sign;
-    }
-
-    public String getQueue() {
-        return queue;
     }
 
     public int[] getArgs() {

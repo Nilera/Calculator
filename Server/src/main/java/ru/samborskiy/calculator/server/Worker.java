@@ -32,15 +32,16 @@ public class Worker implements Runnable {
             while (true) {
                 Delivery delivery = consumer.nextDelivery();
                 Expression exp = Expression.extract(delivery.getBody());
+                String queueName = delivery.getProperties().getReplyTo();
                 System.out.println(String.format("%s received %s %s", name, exp.getSign(), Arrays.toString(exp.getArgs())));
-                expressionProcessing(exp);
+                expressionProcessing(exp, queueName);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private void expressionProcessing(Expression exp) throws IOException {
+    private void expressionProcessing(Expression exp, String queueName) throws IOException {
         Operation operation = OperationFactory.getOperation(exp.getSign());
         operation.setArgs(exp.getArgs());
         Result result;
@@ -49,7 +50,7 @@ public class Worker implements Runnable {
         } catch (Exception e) {
             result = new Result(0, e.getMessage());
         }
-        channel.basicPublish("", exp.getQueue(), null, result.toString().getBytes());
+        channel.basicPublish("", queueName, null, result.toString().getBytes());
     }
 
 }

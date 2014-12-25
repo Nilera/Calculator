@@ -1,5 +1,6 @@
 package ru.samborskiy.calculator.client;
 
+import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
@@ -40,13 +41,10 @@ public class MQService implements AutoCloseable {
         }
     }
 
-    public String getQueueName() {
-        return queue;
-    }
-
     public void sendMessage(byte[] message) throws IOException {
         if (channel != null && channel.isOpen()) {
-            channel.basicPublish("", QUEUE_NAME, null, message);
+            AMQP.BasicProperties properties = new AMQP.BasicProperties.Builder().replyTo(queue).build();
+            channel.basicPublish("", QUEUE_NAME, properties, message);
         }
     }
 
